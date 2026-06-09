@@ -48,7 +48,7 @@ st.markdown("Deconstructing the Cost-Sensitive Stacking Ensemble and real-time f
 # ==========================================
 # 2. DATA & MODEL INGESTION WITH BULLETPROOF CLEANING
 # ==========================================
-@st.cache_resource
+@st.cache_resource(show_spinner=False, ttl=600)
 def load_ensemble():
     """Load the trained ensemble model"""
     model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'crash_predictor.pkl'))
