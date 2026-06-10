@@ -73,6 +73,12 @@ conda activate ProjectQP
 # Install all required packages
 pip install -r requirements.txt
 ```
+**Unstructured NLP Processing (Colab)**
+Due to the computational intensity of running HuggingFace Transformers, the historical financial news dataset was processed via Google Colab.
+1. Upload `tools/colab_nlp_finbert.ipynb` to Google Colab.
+2. Execute the pipeline using a T4 GPU runtime to generate the daily Systemic Stress Scores.
+3. Download the resulting `historical_nlp_stress.csv` and place it in the `/data` directory before running `main.py`.
+   
 **Secure API Keys:**
 Before running, you must provide a NewsAPI key for the NLP engine.
 Create a file named exactly ```.env``` in the root folder and add:
