@@ -23,11 +23,11 @@ def run_production_inference():
 
     # GET LAST PREDICTION DATE
     try:
-        preds_df = pd.read_csv("final_predictions.csv", index_col=0, parse_dates=True)
+        preds_df = pd.read_csv("data/final_predictions.csv", index_col=0, parse_dates=True)
         last_date = preds_df.index[-1]
         print(f"✅ Last Prediction Date -> {last_date.date()}")
     except Exception as e:
-        print(f"❌ STEP 2 FAILED: Could not read final_predictions.csv. Error: {e}")
+        print(f"❌ Could not read final_predictions.csv. Error: {e}")
         return
 
     # FETCH DATA (75-DAY LOOKBACK)
@@ -72,7 +72,7 @@ def run_production_inference():
         engineered_df = master_df[feature_cols]
         
     except Exception as e:
-        print(f"❌ STEP 4 FAILED: Feature Engineering crashed. Error: {e}")
+        print(f"❌ Feature Engineering crashed. Error: {e}")
         return
 
     # STEP 5: LOAD MODEL & FORCE EXACT FEATURE ALIGNMENT
