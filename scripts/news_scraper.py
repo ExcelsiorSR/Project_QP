@@ -74,7 +74,7 @@ def daily_update_pipeline(api_key, provider='newsapi',
     stress_history = db.get_stress_history(days=5000)  # All history
     stress_history = stress_history.sort_values('date')
     stress_history.columns = ['Date', 'Stress_Score']
-    stress_history.to_csv('macro_stress_signals.csv', index=False)
+    stress_history.to_csv('data/macro_stress_signals.csv', index=False)
     
     print(f"\n✅ Stress signals exported")
     print(f"📊 Database now contains {len(stress_history)} days of data")

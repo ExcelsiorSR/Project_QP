@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-packages: '3.10'
+        python-version: '3.10'
         cache: 'pip'
 
     # 3. Install your quantitative architecture's dependencies
@@ -29,11 +29,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    # 4. Run the live update engine using the hidden GitHub secret key
+      # 4. Run the scraper, THEN run the inference engine
     - name: Run Daily Live Inference
       env:
         NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
       run: |
+        python scripts/news_scraper.py
         python scripts/daily_inference.py
 
     # 5. Commit and push the updated SQLite database back to the repository

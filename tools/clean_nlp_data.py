@@ -125,8 +125,8 @@ def clean_all_nlp_files():
     print("="*60 + "\n")
     
     nlp_files = [
-        'macro_stress_signals.csv',
-        'macro_stress_signals.csv',
+        'data/macro_stress_signals.csv',
+        'data/macro_stress_signals.csv',
         'data/historical_nlp_stress.csv',
         'data/historical_nlp_stress_rg.csv',
     ]
@@ -158,8 +158,8 @@ def validate_all_data_types():
     print("="*60 + "\n")
     
     nlp_files = [
-        'macro_stress_signals.csv',
-        'macro_stress_signals.csv',
+        'data/macro_stress_signals.csv',
+        'data/macro_stress_signals.csv',
         'data/historical_nlp_stress.csv',
         'data/historical_nlp_stress_rg.csv',
     ]

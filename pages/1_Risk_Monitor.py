@@ -114,9 +114,9 @@ try:
     
     # NLP Injection
     try:
-        nlp_path = os.path.join(os.path.dirname(__file__), '..', 'macro_stress_signals.csv')
+        nlp_path = os.path.join(os.path.dirname(__file__), '..', 'data/macro_stress_signals.csv')
         live_nlp_df = pd.read_csv(nlp_path)
-        today_stress = float(live_nlp_df['Stress_Score'].iloc[-1])
+        today_stress = float(live_nlp_df['Stress_Score'].dropna().iloc[-1])
     except:
         today_stress = 0.0
         
@@ -124,9 +124,12 @@ try:
     
     # Probability Extraction
     try:
-        raw_prob = model.predict_proba(latest_features)
-        prob = float(np.array(raw_prob).flatten()[-1]) * 100
-    except:
+        if not hist_df.empty and 'Crash_Probability' in hist_df.columns:
+            # Pull the last row that actually contains a valid probability score
+            prob = float(hist_df['Crash_Probability'].dropna().iloc[-1]) * 100
+        else:
+            prob = 0.0
+    except Exception as e:
         prob = 0.0
     
     # ==================================================
@@ -160,17 +163,43 @@ try:
         
     with col2:
         st.subheader("Microstructure")
-        vix_val = latest_features['India_VIX'].iloc[0] if 'India_VIX' in latest_features.columns and not latest_features.empty else 0.0
-        st.metric(label="India VIX", value=f"{vix_val:.2f}", help="Volatility Index: Measures the market's expectation of 30-day forward volatility. Values > 25 indicate severe systemic fear.")
         
-        st.metric(label="NLP Stress", value=f"{today_stress:.2f}", help="Proprietary FinBERT sentiment index aggregating real-time financial headlines. A rising score indicates compounding macroeconomic fear and negative news flow.")
+        # Pull live India VIX directly from Yahoo Finance ticker India VIX ("^INDIAVIX")
+        try:
+            vix_data = yf.download('^INDIAVIX', period='1d', progress=False)
+            if isinstance(vix_data.columns, pd.MultiIndex):
+                vix_data.columns = vix_data.columns.get_level_values(0)
+            vix_val = float(vix_data['Close'].iloc[-1])
+        except Exception as e:
+            # Fallback to feature engine proxies if API fails
+            vix_val = float(live_df['VIX_MA_5'].dropna().iloc[-1]) if 'VIX_MA_5' in live_df.columns else 0.0
+            
+        st.metric(label="India VIX", value=f"{vix_val:.2f}", help="Volatility Index: Measures the market's expectation of 30-day forward volatility. Values > 25 indicate severe systemic fear.")
+        st.metric(label="Sentiment Stress", value=f"{today_stress:.2f}", help="Proprietary FinBERT sentiment index aggregating real-time financial headlines. A rising score indicates compounding macroeconomic fear and negative news flow.")
         
     with col3:
         st.subheader("Macro-Tangents")
-        crude_val = latest_features['Crude_Oil'].iloc[0] if 'Crude_Oil' in latest_features.columns and not latest_features.empty else 0.0
-        st.metric(label="Crude Oil", value=f"${crude_val:.2f}", help="Global benchmark price. As a heavy net importer, a spike in crude oil acts as a direct tax on the Indian economy, driving inflation and tightening corporate margins.")
         
-        inr_val = latest_features['INR_USD'].iloc[0] if 'INR_USD' in latest_features.columns and not latest_features.empty else 0.0
+        # Pull live Brent Crude Oil Spot price directly ("BZ=F")
+        try:
+            crude_data = yf.download('BZ=F', period='1d', progress=False)
+            if isinstance(crude_data.columns, pd.MultiIndex):
+                crude_data.columns = crude_data.columns.get_level_values(0)
+            crude_val = float(crude_data['Close'].iloc[-1])
+        except Exception as e:
+            crude_val = 0.0
+            
+        st.metric(label="Crude Oil", value=f"${crude_val:.2f}", help="Global benchmark price for Brent Crude. As a heavy net importer, a spike in crude oil acts as a direct tax on the Indian economy, driving inflation and tightening corporate margins.")
+        
+        # Pull live USD/INR exchange rate spot directly ("INR=X")
+        try:
+            usd_inr_data = yf.download('INR=X', period='1d', progress=False)
+            if isinstance(usd_inr_data.columns, pd.MultiIndex):
+                usd_inr_data.columns = usd_inr_data.columns.get_level_values(0)
+            inr_val = float(usd_inr_data['Close'].iloc[-1])
+        except Exception as e:
+            inr_val = 0.0
+            
         st.metric(label="USD/INR", value=f"₹{inr_val:.2f}", help="US Dollar to Indian Rupee exchange rate. A surging US Dollar typically triggers Foreign Institutional Investor (FII) outflows, draining liquidity from emerging markets.")
 
     st.markdown("---")
@@ -185,10 +214,13 @@ try:
         fig_hist = make_subplots(specs=[[{"secondary_y": True}]])
         
         # Nifty Price Line
-        fig_hist.add_trace(go.Scatter(x=hist_df.index, y=hist_df['Close'], name="Nifty 50", line=dict(color='blue')), secondary_y=False)
+        fig_hist.add_trace(go.Scatter(x=hist_df.index, y=hist_df['Close'], name="Nifty 50", 
+                                      line=dict(color='blue')), secondary_y=False)
         
         # Crash Probability Area
-        fig_hist.add_trace(go.Scatter(x=hist_df.index, y=hist_df['Crash_Probability'] * 100, name="Crash Probability %", fill='tozeroy', line=dict(color='rgba(255, 0, 0, 0.3)')), secondary_y=True)
+        fig_hist.add_trace(go.Scatter(x=hist_df.index, y=hist_df['Crash_Probability'] * 100, 
+                                      name="Crash Probability %", fill='tozeroy', 
+                                      line=dict(color='rgba(255, 0, 0, 0.3)')), secondary_y=True)
         
         # Add Threshold Line
         fig_hist.add_hline(y=DYNAMIC_THRESHOLD, line_dash="dot", line_color="red", annotation_text="Danger Threshold", secondary_y=True)

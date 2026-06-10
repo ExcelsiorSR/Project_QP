@@ -101,7 +101,7 @@ def test_data_files():
         'crash_predictor.pkl',
         'data/final_predictions.csv',
         'data/financial_news.db',
-        'macro_stress_signals.csv',
+        'data/macro_stress_signals.csv',
     ]
     
     missing = []
@@ -133,7 +133,7 @@ def test_csv_data_types():
     import numpy as np
     
     csv_files = [
-        'macro_stress_signals.csv',
+        'data/macro_stress_signals.csv',
         'data/final_predictions.csv',
     ]
     

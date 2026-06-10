@@ -50,8 +50,8 @@ def run_production_inference():
         master_df = feature_engine.engineer_comprehensive_features()
         
         # Merge the NLP Stress Score from the scraper's CSV output
-        if os.path.exists('macro_stress_signals.csv'):
-            stress_df = pd.read_csv('macro_stress_signals.csv')
+        if os.path.exists('data/macro_stress_signals.csv'):
+            stress_df = pd.read_csv('data/macro_stress_signals.csv')
             stress_df['Date'] = pd.to_datetime(stress_df['Date'])
             stress_df.set_index('Date', inplace=True)
             
@@ -125,7 +125,7 @@ def run_production_inference():
         updated_preds = updated_preds[~updated_preds.index.duplicated(keep='last')]
         updated_preds = updated_preds.sort_index()
         
-        updated_preds.to_csv("final_predictions.csv")
+        updated_preds.to_csv("data/final_predictions.csv")
         
         print(f"✅ Database extended to {updated_preds.index[-1].date()}")
         print("\n🎉 LIVE INFERENCE PIPELINE FULLY OPERATIONAL!")
