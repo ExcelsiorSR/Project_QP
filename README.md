@@ -86,7 +86,7 @@ Tasks:
 ## 📂 Repository Structure
 
 ```text
-├── data/                           # SQLite database and static historical CSVs
+├── data/                           
 │   ├── final_predictions.csv       
 │   ├── financial_news.db
 │   ├── historical_nlp_stress_rg.csv 
