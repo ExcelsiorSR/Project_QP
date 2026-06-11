@@ -87,22 +87,6 @@ def load_macro_history():
     return df.tail(30)
 
 @st.cache_data
-def load_probability_history():
-
-    path = os.path.join(
-        os.path.dirname(__file__),
-        '..',
-        'data',
-        'final_predictions.csv'
-    )
-
-    df = pd.read_csv(path)
-
-    df['Date'] = pd.to_datetime(df['Date'])
-
-    return df.tail(30)
-
-@st.cache_data
 def load_live_risk_history():
 
     path = os.path.join(
@@ -254,6 +238,9 @@ try:
             
         st.metric(label="USD/INR", value=f"₹{inr_val:.2f}", help="US Dollar to Indian Rupee exchange rate. A surging US Dollar typically triggers Foreign Institutional Investor (FII) outflows, draining liquidity from emerging markets.")
 
+    if st.button("🔄 Refresh Live Feeds", width='stretch'):
+        st.rerun()
+          
     st.markdown("---")
     
     # ==================================================

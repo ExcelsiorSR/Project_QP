@@ -23,18 +23,12 @@ def run_production_inference():
 
     # GET LAST PREDICTION DATE
     try:
-        preds_df = pd.read_csv(
-            "data/final_predictions.csv"
-        )
-
-        preds_df["Date"] = pd.to_datetime(
-            preds_df["Date"]
-        )
-
-        preds_df.set_index(
-            "Date",
-            inplace=True
-        )
+        preds_df = pd.read_csv("data/final_predictions.csv")
+        preds_df["Date"] = pd.to_datetime(preds_df["Date"])
+        preds_df.set_index("Date", inplace=True)
+        
+        # FIX 1: Strip timezones from the CSV index
+        preds_df.index = preds_df.index.tz_localize(None)
 
         last_date = preds_df.index.max()
         print(f"✅ Last Prediction Date -> {last_date.date()}")
@@ -42,16 +36,21 @@ def run_production_inference():
         print(f"❌ Could not read final_predictions.csv. Error: {e}")
         return
 
-    # FETCH DATA (75-DAY LOOKBACK)
-    lookback_date = last_date - timedelta(days=75)
+# FETCH DATA (120-DAY LOOKBACK)
+    lookback_date = last_date - timedelta(days=120)
     lookback_str = lookback_date.strftime('%Y-%m-%d')
-    today_str = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+    today_str = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
     
     print(f"\n📡 Initializing Market Engine ({lookback_str} to {today_str})")
     try:
         feature_engine = IndianMarketFeatureEngine(start_date=lookback_str, end_date=today_str)
         feature_engine.fetch_all_market_data()
         print(f"✅ Market Data Extracted.")
+        
+        # (Assuming your engine stores raw data in an attribute like feature_engine.data or similar)
+        if hasattr(feature_engine, 'nifty_data') and feature_engine.nifty_data is not None:
+            print(f"📊 Raw Nifty Data Range: {feature_engine.nifty_data.index.min().date()} to {feature_engine.nifty_data.index.max().date()}")
+            
     except Exception as e:
         print(f"❌ Data fetch error: {e}")
         return
@@ -60,6 +59,9 @@ def run_production_inference():
     print("\n⚙️ Engineering Features & Merging NLP...")
     try:
         master_df = feature_engine.engineer_comprehensive_features()
+        
+        print(f"📊 Post-Feature Engineering Max Date: {master_df.index.max().date()}")
+        print(f"📊 Total Rows Generated: {len(master_df)}")
         
         # Merge the NLP Stress Score from the scraper's CSV output
         if os.path.exists('data/macro_stress_signals.csv'):
@@ -110,12 +112,24 @@ def run_production_inference():
         print(f"❌ Model Loading/Alignment Error: {e}")
         return
 
-    # STEP 6: SLICE THE DELTA AND RUN INFERENCE
+# STEP 6: SLICE THE DELTA AND RUN INFERENCE
+    print("\n⏱️ Synchronizing Datetime Indices...")
+    
+    # 1. Force strict Midnight timestamps (00:00:00) to eliminate close-of-market hour collisions
+    engineered_df.index = pd.to_datetime(engineered_df.index).normalize().tz_localize(None)
+    last_date = pd.to_datetime(last_date).normalize().tz_localize(None)
+    
+    # 2. Inject Observability Logs (Crucial for debugging API lags)
+    print(f"🔍 Target Last Date in DB  -> {last_date.date()}")
+    print(f"🔍 Max Date from Yahoo API -> {engineered_df.index.max().date()}")
+    
+    # 3. Slice the delta
     delta_matrix = engineered_df[engineered_df.index > last_date]
     delta_matrix = delta_matrix.ffill().fillna(0.0)
     
     if len(delta_matrix) == 0:
         print("\n✅ System is already up to date. No new trading days found.")
+        print("💡 Diagnostic: If the Indian market was open today, Yahoo Finance is currently experiencing a known API delay for the ^NSEI or ^INDIAVIX tickers.")
         return
 
     print(f"\n🧠 Running Model Inference on {len(delta_matrix)} days...")
