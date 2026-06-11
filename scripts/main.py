@@ -10,6 +10,7 @@ from sklearn.linear_model import LogisticRegression
 import subprocess
 import sys
 import os
+from datetime import datetime, timedelta
 from sklearn.metrics import (
     classification_report, confusion_matrix, roc_auc_score,
     precision_recall_curve, average_precision_score, f1_score, recall_score
@@ -54,13 +55,26 @@ def train_model():
     print("\n" + "="*70)
     print("🚀 MARKET CRASH PREDICTION - TRAINING PIPELINE")
     print("="*70 + "\n")
+
+
+    today = datetime.now()
+
+    # Monday=0 ... Sunday=6
+    days_since_friday = (today.weekday() - 4) % 7
+
+    if days_since_friday == 0:
+        days_since_friday = 7
+
+    last_friday = today - timedelta(days=days_since_friday)
+
+    end_date = last_friday.strftime("%Y-%m-%d")
     
     
     # 1. Create dataset
     print("Step 1: Creating dataset...")
     engine = IndianMarketFeatureEngine(
         start_date="2008-01-01",
-        end_date="2026-05-01"
+        end_date=end_date
     )
     master_df = engine.get_final_dataset()
     
@@ -95,7 +109,7 @@ def train_model():
     except Exception as e:
         print(f"⚠️  NLP integration failed: {e}. Continuing without NLP.")
         master_df['Stress_Score'] = 0.0
-    
+     
     master_df = master_df.dropna()
     
     # 3. Split data
@@ -155,7 +169,7 @@ def train_model():
         'Predicted_Label': predictions,
         'Crash_Probability': probabilities
     })
-    results_df.to_csv('data/final_predictions.csv', index=False)
+    results_df.to_csv('data/model_validation_results.csv', index=False)
     
     # 10. Save model
     joblib.dump(ensemble, 'crash_predictor.pkl')
@@ -165,7 +179,7 @@ def train_model():
     print("="*70)
     print("📁 Saved files:")
     print("   • crash_predictor.pkl (trained model)")
-    print("   • data/final_predictions.csv (test results)")
+    print("   • data/model_validation_results.csv (test results)")
     print("   • feature_importance.png")
     print("   • threshold_analysis.png")
     

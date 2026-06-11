@@ -58,6 +58,17 @@ class NewsDatabase:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+
+        # Stress-triggering headlines
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS stress_headlines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                headline TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(date, headline)
+            )
+        ''')
         
         # Model predictions table (for tracking performance)
         cursor.execute('''
@@ -93,6 +104,7 @@ class NewsDatabase:
         
         self.conn.commit()
         print(f"✅ Inserted {len(headlines_df)} headlines")
+
     
     # ==========================================
     # INSERTS DAILY STRESS SCORE
@@ -104,6 +116,36 @@ class NewsDatabase:
             INSERT OR REPLACE INTO stress_scores (date, stress_score, num_headlines)
             VALUES (?, ?, ?)
         ''', (date, stress_score, num_headlines))
+        self.conn.commit()
+
+    def insert_stress_score(self, date, stress_score, num_headlines):
+
+        cursor = self.conn.cursor()
+
+        cursor.execute('''
+                INSERT OR REPLACE INTO stress_scores
+                (date, stress_score, num_headlines)
+                VALUES (?, ?, ?)
+            ''', (date, stress_score, num_headlines))
+
+        self.conn.commit()
+
+
+    # ==========================================
+    # INSERTS STRESS HEADLINES
+    # ==========================================
+    def insert_stress_headlines(self, date, headlines):
+
+        cursor = self.conn.cursor()
+
+        for headline in headlines:
+
+            cursor.execute('''
+                INSERT OR IGNORE INTO stress_headlines
+                (date, headline)
+                VALUES (?, ?)
+            ''', (date, headline))
+
         self.conn.commit()
     
     # ==========================================

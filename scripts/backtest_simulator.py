@@ -9,6 +9,7 @@ import numpy as np
 import joblib
 import sys
 import os
+from datetime import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) 
 
@@ -18,12 +19,20 @@ from modules.model_engine import CostSensitiveEnsemble
 #                  BACKTESTER MODULE
 # ======================================================
 
+
+
 def run_backtest():
     # Load model's outputs
-    preds_df = pd.read_csv('data/final_predictions.csv', index_col='Date', parse_dates=True)
+    preds_df = pd.read_csv('data/model_validation_results.csv', index_col='Date', parse_dates=True)
+    end_date = min(preds_df.index[-1],pd.Timestamp.today())
 
     # Fetch the actual Nifty data for the exact same date range
-    nifty = yf.download('^NSEI', start=preds_df.index[0], end=preds_df.index[-1])
+    nifty = yf.download('^NSEI', start=preds_df.index[0], end=end_date)
+    if nifty.empty:
+        print(
+        "❌ Nifty download returned no data. Skipping backtest."
+        )
+        return
     if isinstance(nifty.columns, pd.MultiIndex):
         nifty.columns = nifty.columns.get_level_values(0)
 
@@ -31,7 +40,14 @@ def run_backtest():
     df = pd.DataFrame(index=preds_df.index)
     df['Close'] = nifty['Close']
     df['Crash_Probability'] = preds_df['Crash_Probability']
+    df = df.dropna(subset=['Close'])
     df['Nifty_Return'] = df['Close'].ffill().pct_change()
+
+    if len(df) < 30:
+        print(
+            "⚠️ Not enough observations for backtest."
+        )
+        return
     
     # ==========================================
     # 4. THE DYNAMIC THRESHOLD EXTRACTION

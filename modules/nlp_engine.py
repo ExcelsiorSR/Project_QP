@@ -55,7 +55,7 @@ class NewsAPIClient:
         
         params = {
             'apiKey': self.api_key,
-            'q': 'Nifty OR Sensex OR RBI OR Indian economy OR Dalal Street',
+            'q': '(Nifty OR Sensex OR RBI OR "Indian economy" OR "Dalal Street" OR inflation OR recession OR "Federal Reserve" OR Fed OR "Bank of Japan" OR oil OR crude OR banking OR liquidity)',
             'language': 'en',
             'from': yesterday,
             'to': today,
@@ -109,7 +109,14 @@ class StressScoreCalculator:
             "Severe liquidity crisis, cascading margin calls, structural default, market panic",
             "Banking system collapse, credit freeze, financial contagion",
             "Market crash, circuit breakers triggered, unprecedented selloff",
-            "Sovereign debt default, currency crisis, economic collapse"
+            "Sovereign debt default, currency crisis, economic collapse",
+
+            "Federal Reserve emergency rate hike, inflation shock, recession fears",
+            "RBI policy tightening, liquidity squeeze, banking stress",
+            "BoJ intervention, yen collapse, bond market stress",
+            "Global financial crisis, credit downgrade, sovereign risk",
+            "Oil shock, energy crisis, stagflation concerns",
+            "Trade war escalation, sanctions, geopolitical market uncertainty"
         ]
     
     # ============================================
@@ -141,7 +148,7 @@ class StressScoreCalculator:
             
             # Only consider headlines with similarity above threshold
             for dist, idx in zip(distances[0], indices[0]):
-                if dist < 0.8:  # Similarity threshold (lower distance = higher similarity)
+                if dist < 2.0:  # Similarity threshold (lower distance = higher similarity)
                     all_anomaly_indices.add(idx)
         
         if len(all_anomaly_indices) == 0:
@@ -156,10 +163,55 @@ class StressScoreCalculator:
             batch_size = 32)  # Limit to avoid API issues
         
         # Calculate aggregate stress
+        financial_keywords = [
+            'market',
+            'stock',
+            'stocks',
+            'equity',
+            'equities',
+            'bank',
+            'banking',
+            'rbi',
+            'reserve bank',
+            'federal reserve',
+            'fed',
+            'boj',
+            'bank of japan',
+            'ecb',
+            'inflation',
+            'interest rate',
+            'rate hike',
+            'recession',
+            'economy',
+            'economic',
+            'nifty',
+            'sensex',
+            'bond',
+            'yield',
+            'currency',
+            'forex',
+            'rupee',
+            'dollar',
+            'oil',
+            'crude',
+            'debt',
+            'default',
+            'liquidity',
+            'trade',
+            'tariff',
+            'sanctions',
+            'gdp',
+            'unemployment'
+        ]
+
         negative_scores = [
-            result['score'] 
-            for result in stress_results 
+            result['score']
+            for headline, result in zip(anomalies, stress_results)
             if result['label'] == 'negative'
+            and any(
+                keyword in headline.lower()
+                for keyword in financial_keywords
+            )
         ]
         
         if negative_scores:

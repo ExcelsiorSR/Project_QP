@@ -23,8 +23,20 @@ def run_production_inference():
 
     # GET LAST PREDICTION DATE
     try:
-        preds_df = pd.read_csv("data/final_predictions.csv", index_col=0, parse_dates=True)
-        last_date = preds_df.index[-1]
+        preds_df = pd.read_csv(
+            "data/final_predictions.csv"
+        )
+
+        preds_df["Date"] = pd.to_datetime(
+            preds_df["Date"]
+        )
+
+        preds_df.set_index(
+            "Date",
+            inplace=True
+        )
+
+        last_date = preds_df.index.max()
         print(f"✅ Last Prediction Date -> {last_date.date()}")
     except Exception as e:
         print(f"❌ Could not read final_predictions.csv. Error: {e}")
@@ -33,7 +45,7 @@ def run_production_inference():
     # FETCH DATA (75-DAY LOOKBACK)
     lookback_date = last_date - timedelta(days=75)
     lookback_str = lookback_date.strftime('%Y-%m-%d')
-    today_str = datetime.now().strftime('%Y-%m-%d')
+    today_str = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
     
     print(f"\n📡 Initializing Market Engine ({lookback_str} to {today_str})")
     try:
@@ -92,7 +104,7 @@ def run_production_inference():
                 
         # Force the dataframe to have the exact columns in the exact order
         engineered_df = engineered_df[expected_features]
-        print("✅ Matrix perfectly aligned with Meta-Learner.")
+        engineered_df = (engineered_df.replace([np.inf, -np.inf], np.nan).ffill().fillna(0.0))
         
     except Exception as e:
         print(f"❌ Model Loading/Alignment Error: {e}")

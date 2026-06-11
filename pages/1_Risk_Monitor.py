@@ -36,30 +36,22 @@ def fetch_live_data():
 
 @st.cache_data
 def fetch_latest_news():
+
     try:
-        db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data/financial_news.db'))
-        
-        if not os.path.exists(db_path):
-            st.sidebar.error(f"Database not found at: {db_path}")
+        csv_path = os.path.join(
+            os.path.dirname(__file__),
+            '..',
+            'data',
+            'latest_stress_headlines.csv'
+        )
+
+        if not os.path.exists(csv_path):
             return pd.DataFrame()
-            
-        conn = sqlite3.connect(db_path)
-        
-        # 1. Automatically find the table name
-        tables = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table'", conn)
-        if tables.empty:
-            st.sidebar.error("Database exists but contains no tables.")
-            return pd.DataFrame()
-            
-        table_name = tables['name'].iloc[0]
-        
-        # 2. Fetch the data
-        news_df = pd.read_sql_query(f"SELECT * FROM {table_name} LIMIT 10", conn)
-        conn.close()
-        return news_df
-        
+
+        return pd.read_csv(csv_path)
+
     except Exception as e:
-        st.sidebar.error(f"SQLite Error: {e}")
+        st.sidebar.error(f"News Feed Error: {e}")
         return pd.DataFrame()
     
 @st.cache_data
@@ -77,6 +69,56 @@ def fetch_historical_predictions():
         return df.tail(200) 
     except Exception as e:
         return pd.DataFrame()
+    
+@st.cache_data
+def load_macro_history():
+
+    path = os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'data',
+        'macro_stress_signals.csv'
+    )
+
+    df = pd.read_csv(path)
+
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    return df.tail(30)
+
+@st.cache_data
+def load_probability_history():
+
+    path = os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'data',
+        'final_predictions.csv'
+    )
+
+    df = pd.read_csv(path)
+
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    return df.tail(30)
+
+@st.cache_data
+def load_live_risk_history():
+
+    path = os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'data',
+        'live_risk_history.csv'
+    )
+
+    df = pd.read_csv(path)
+
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    return df.tail(30)
+
+
 
 # ==========================================
 #           INFERENCE & UI
@@ -175,7 +217,17 @@ try:
             vix_val = float(live_df['VIX_MA_5'].dropna().iloc[-1]) if 'VIX_MA_5' in live_df.columns else 0.0
             
         st.metric(label="India VIX", value=f"{vix_val:.2f}", help="Volatility Index: Measures the market's expectation of 30-day forward volatility. Values > 25 indicate severe systemic fear.")
-        st.metric(label="Sentiment Stress", value=f"{today_stress:.2f}", help="Proprietary FinBERT sentiment index aggregating real-time financial headlines. A rising score indicates compounding macroeconomic fear and negative news flow.")
+        st.metric(label="Sentiment Stress", value=f"{today_stress:.2f}", help="""
+                                                                            Proprietary FinBERT sentiment index aggregating real-time financial headlines.
+
+                                                                            0.00 - 0.40 → Normal
+                                                                            0.40 - 0.65 → Elevated
+                                                                            0.65 - 0.80 → High Stress
+                                                                            0.80 - 1.00 → Crisis Conditions
+
+                                                                            Values above 0.80 historically correspond to periods of severe macroeconomic uncertainty,
+                                                                            liquidity stress, geopolitical escalation, or broad risk-off sentiment.
+                                                                            """)
         
     with col3:
         st.subheader("Macro-Tangents")
@@ -233,12 +285,105 @@ try:
         st.markdown("---")
 
     # ==================================================
+    # 30-DAY HISTORICAL DASHBOARD
+    # ==================================================
+
+    st.subheader("📊 30-Day Risk Dashboard")
+
+    risk_df = load_live_risk_history()
+
+    risk_df = load_live_risk_history()
+
+    col_left, col_right = st.columns(2)
+
+    # --------------------------------------------------
+    # SENTIMENT STRESS
+    # --------------------------------------------------
+
+    with col_left:
+
+        fig_stress = go.Figure()
+
+        fig_stress.add_trace(
+            go.Scatter(x=risk_df['Date'],
+                       y=risk_df['Stress_Score'],
+                       mode='lines+markers',
+                       name='Stress Score'
+                       )
+                       )
+
+        fig_stress.add_hline(
+            y=0.40,
+            line_dash="dot",
+            annotation_text="Normal"
+        )
+
+        fig_stress.add_hline(
+            y=0.65,
+            line_dash="dot",
+            annotation_text="Elevated"
+        )
+
+        fig_stress.add_hline(
+            y=0.80,
+            line_dash="dot",
+            annotation_text="Crisis"
+        )
+
+        fig_stress.update_layout(
+            title="FinBERT Sentiment Stress",
+            height=350,
+            yaxis_title="Stress Score",
+            template="plotly_dark"
+        )
+
+        st.plotly_chart(fig_stress, width="stretch")
+
+    # --------------------------------------------------
+    # CRASH PROBABILITY
+    # --------------------------------------------------
+
+    with col_right:
+
+        fig_prob = go.Figure()
+
+        fig_prob.add_trace(
+            go.Scatter(
+                x=risk_df['Date'],
+                y=risk_df['Crash_Probability'] * 100,
+                mode='lines+markers',
+                name='Crash Probability'
+            )
+        )
+
+        fig_prob.add_hline(
+            y=DYNAMIC_THRESHOLD,
+            line_dash="dot",
+            annotation_text="Danger Threshold"
+        )
+
+        fig_prob.update_layout(
+            title="Crash Probability Trend",
+            height=350,
+            yaxis_title="Probability (%)",
+            template="plotly_dark"
+        )
+
+        st.plotly_chart(fig_prob, width="stretch")
+
+    st.markdown("---")
+
+    # ==================================================
     # BOTTOM ROW: NLP FEED
     # ==================================================
     st.subheader("📰 Live FinBERT Sentiment Feed.")
     if not news_df.empty:
-        for idx, row in news_df.head(10).iterrows():
-            st.markdown(f"**[{row['headline']}]({row['url']})** - *{row['source']}*")
+        for _, row in news_df.head(10).iterrows():
+            st.markdown(
+                f"• [{row['headline']}]({row['url']}) "
+                f"<span style='color:gray'>({row['source']})</span>",
+                unsafe_allow_html=True
+            )
     else:
         st.warning("No live news data found. Please run scripts/news_scraper.py to populate the database.")
 

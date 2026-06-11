@@ -13,11 +13,15 @@ import numpy as np
 import time
 import sys
 import os
+import joblib
+import yfinance as yf
+import subprocess
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) 
 
 from modules.db_manager import NewsDatabase
 from modules.nlp_engine import NewsAPIClient, StressScoreCalculator
+from modules.data_pipeline import IndianMarketFeatureEngine
 from dotenv import load_dotenv
 
 # ============================================================================
@@ -60,6 +64,12 @@ def daily_update_pipeline(api_key, provider='newsapi',
     today = datetime.now().strftime('%Y-%m-%d')
     headlines_list = headlines_df['headline'].tolist()
     stress_score, anomalies = stress_calculator.calculate_stress(headlines_list)
+    # Get full rows corresponding to detected anomalies
+    anomaly_rows = headlines_df[headlines_df['headline'].isin(anomalies)]
+    db.insert_stress_headlines(today,anomalies)
+
+    # Save for dashboard feed
+    anomaly_rows[['headline', 'source', 'url']].to_csv('data/latest_stress_headlines.csv',index=False)
     
     print(f"\n🔥 Stress Score for {today}: {stress_score:.3f}")
     if anomalies:
@@ -69,6 +79,7 @@ def daily_update_pipeline(api_key, provider='newsapi',
     
     # Store stress score
     db.insert_stress_score(today, stress_score, len(headlines_list))
+
     
     # Export stress signals CSV
     stress_history = db.get_stress_history(days=5000)  # All history
@@ -99,5 +110,9 @@ if __name__ == "__main__":
         api_key=api_key,
         provider='newsapi',
         db_path=db_absolute_path
+    )
+    subprocess.run(
+    [sys.executable, "scripts/risk_snapshot.py"],
+    check=False
     )
     print(f"Daily scrape complete. Final Stress Score: {stress_score}")

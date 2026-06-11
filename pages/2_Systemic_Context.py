@@ -72,10 +72,32 @@ try:
         labels = ['BankNifty', 'IT', 'FMCG', 'Auto']
         
         sector_returns = []
+
+        nifty_ret = (
+            raw_prices['^NSEI'].ffill().iloc[-1]
+            - raw_prices['^NSEI'].ffill().iloc[-30]
+        ) / raw_prices['^NSEI'].ffill().iloc[-30]
+
         for tick in sectors:
-            ret = (raw_prices[tick].iloc[-1] - raw_prices[tick].iloc[-30]) / raw_prices[tick].iloc[-30]
-            sector_returns.append(ret * 100) 
-            
+
+            series = raw_prices[tick].ffill().dropna()
+
+            if len(series) < 30:
+                sector_returns.append(0)
+                continue
+
+            sector_ret = (
+                series.iloc[-1]
+                - series.iloc[-30]
+            ) / series.iloc[-30]
+
+            relative_strength = (
+                sector_ret - nifty_ret
+            ) * 100
+
+            sector_returns.append(relative_strength)
+
+
         fig_radar = go.Figure(data=go.Scatterpolar(
             r=sector_returns,
             theta=labels,
@@ -87,7 +109,7 @@ try:
         
         fig_radar.update_layout(
             polar=dict(
-                bgcolor='rgba(0,0,0,0)',  # <-- THIS FIXES THE WHITE CIRCLE
+                bgcolor='rgba(0,0,0,0)',  
                 radialaxis=dict(visible=True, gridcolor='rgba(255, 255, 255, 0.2)', color='white'),
                 angularaxis=dict(gridcolor='rgba(255, 255, 255, 0.2)', color='white')
             ),
@@ -107,7 +129,8 @@ try:
     st.subheader("Net Institutional Cash Flow (FII vs. DII)", help="Tracks net buying/selling by Foreign (FII) and Domestic (DII) institutions. Severe market crashes are historically triggered by massive, sustained FII capitulation.")
     
     # Mathematical Simulation of FII/DII Flow (Since NSE API is restricted)
-    # Note: Replace this block with your own CSV read if you have hard NSE data!
+    st.caption(
+    "Illustrative FII/DII flow simulation used for dashboard demonstration.")
     np.random.seed(42) # Keeps the chart stable on refresh
     dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
     # Simulate FIIs selling in a stressed regime, and DIIs attempting to buy the dip
