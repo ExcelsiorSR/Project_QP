@@ -40,7 +40,7 @@ The system was validated on unseen test data using a cost-sensitive framework fo
 Crash Detection Recall: 88.9%
 Successfully captured 16 out of 18 crash regimes.
 
-ROC-AUC Score: 0.973
+ROC-AUC Score: 0.968
 
 Weighted Cost Function: 25.00
 Optimized specifically to minimize False Negatives.
