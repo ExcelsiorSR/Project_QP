@@ -9,21 +9,77 @@ An AI-driven quantitative finance architecture that fuses macroeconomic indicato
 ---
 
 ## 🏛 System Architecture
-Traditional risk models are structurally reactive, failing to detect compounding behavioral panic until the price has already collapsed. This project introduces a **Dual-Engine Architecture** to detect the invisible onset of macroeconomic panic before the sell-off.
+Three-Layer Institutional Architecture
 
-1. **Alternative Data NLP Engine:** Scrapes unstructured daily financial headlines via NewsAPI and utilizes a localized HuggingFace **FinBERT** pipeline to calculate a daily "Systemic Stress Score."
-2. **Market Microstructure Engine:** Extracts structural tail-risk indicators (Volatility Skew, Lower Partial Moments, Drawdowns, Dollar Index) using 18 years of historical OHLCV data.
-3. **Cost-Sensitive Meta-Learner:** A highly optimized ensemble (XGBoost, Random Forest, GBM) mathematically penalized (5x) for False Negatives, ensuring capital preservation over yield chasing.
+Traditional risk models are structurally reactive, failing to detect compounding behavioral panic until prices have already collapsed. Project QP introduces a Three-Layer Architecture designed to identify the invisible onset of systemic stress before the broader market reprices risk.
+
+Layer 1: Alternative Data Intelligence Engine
+• Scrapes real-time financial headlines through NewsAPI
+• Processes unstructured text using a localized FinBERT pipeline
+• Generates a daily Systemic Stress Score
+• Produces macro_stress_signals.csv and latest_stress_headlines.csv
+
+Layer 2: Market Microstructure Engine
+• Extracts structural tail-risk indicators from global market data
+• Engineers volatility, drawdown, and cross-asset stress features
+• Tracks Flight-to-Safety behaviour through Gold, Oil, Currency and VIX dynamics
+• Calculates Composite Stress and sectoral rotation metrics
+
+Layer 3: Cost-Sensitive Ensemble
+• Ensemble of XGBoost, Random Forest, and Gradient Boosting models
+• Optimized to heavily penalize False Negatives (5x cost weighting)
+• Produces dynamic crash probabilities and market regime classifications
+
+Feature Count: 41 engineered quantitative and alternative-data features.
 
 ---
 
 ## 📊 Evaluation Metrics & Financial Impact
-The system was validated on unseen test data (2023-2026) focusing on severe drawdown events. Standard ML accuracy was discarded in favor of Recall and Capital Preservation.
+The system was validated on unseen test data using a cost-sensitive framework focused on crash detection rather than conventional classification accuracy.
 
-* **Crash Detection Recall:** `88.9%` (Successfully captured 16 out of 18 crash regimes)
-* **ROC-AUC Score:** `0.973`
-* **Weighted Cost Function:** `25.00` (Optimized for False Negative minimization)
-* **Financial Impact (Backtest):** Reduced the maximum portfolio drawdown from `-14.78%` (Buy & Hold) to `-13.20%` (Strategy).
+Crash Detection Recall: 88.9%
+Successfully captured 16 out of 18 crash regimes.
+
+ROC-AUC Score: 0.973
+
+Weighted Cost Function: 25.00
+Optimized specifically to minimize False Negatives.
+
+Financial Impact (Backtest)
+
+Buy & Hold Maximum Drawdown:
+-14.78%
+
+Project QP Maximum Drawdown:
+-10.85%
+
+The model demonstrates a meaningful reduction in portfolio drawdown while maintaining exposure during normal market conditions.
+
+## ⚙️ Automated MLOps Pipeline
+
+The entire production architecture is automated using GitHub Actions.
+
+Live Market & Sentiment Sync
+Frequency: Every 30 minutes during NSE trading hours
+
+Tasks:
+• News ingestion via NewsAPI
+• FinBERT sentiment extraction
+• Systemic Stress Score generation
+• Daily feature engineering
+• Crash probability inference
+• Prediction database updates
+
+Weekly Ensemble Retraining
+Frequency: Every Monday before market open
+
+Tasks:
+• Historical dataset refresh
+• Model retraining
+• Threshold recalibration
+• Validation generation
+• Automated backtesting
+• Artifact deployment
 
 ---
 
@@ -31,6 +87,14 @@ The system was validated on unseen test data (2023-2026) focusing on severe draw
 
 ```text
 ├── data/                           # SQLite database and static historical CSVs
+│   ├── final_predictions.csv       
+│   ├── financial_news.db
+│   ├── historical_nlp_stress_rg.csv 
+│   ├── historical_nlp_stress.csv 
+│   ├── latest_stress_headlines.csv
+│   ├── live_risk_history.csv
+│   ├── macro_stress_signals.csv
+│   └── model_validation_results.csv                       
 ├── modules/                        # Core Quantitative Classes
 │   ├── data_pipeline.py            # IndianMarketFeatureEngine
 │   ├── db_manager.py               # Database Architecture
@@ -46,7 +110,8 @@ The system was validated on unseen test data (2023-2026) focusing on severe draw
 │   ├── backtest_simulator.py       # Historical performance evaluation
 │   ├── daily_inference.py          # Live dynamic delta-pipeline
 │   ├── main.py                     # Core Historical Training Pipeline
-│   └── news_scraper.py             # Automated NewsAPI ingestion
+│   ├── news_scraper.py             # Automated NewsAPI ingestion
+│   └── risk_snapshot.py            # Daily live risk history generation
 ├── tools/                          # Research, batch processing, and CI/CD validation
 │   ├── clean_nlp_data.py           
 │   ├── colab_nlp_finbert.ipynb     
@@ -120,24 +185,58 @@ streamlit run Home.py
 ```Home.py``` & ```pages/``` **(The "App")**: This is the Streamlit web application that visually renders the historical backtests, SHAP explainability, and live market regimes.
 
 ## 🗄️ Data Files
-**Input**: Historical ```.csv``` files stored in the /data folder, alongside the unstructured NLP data dynamically fetched via NewsAPI.
+Input Files
 
-**Output**: ```crash_predictor.pkl``` (the model) and ```financial_news.db``` (the SQLite database). The Streamlit app relies on these generated files to function.
+• financial_news.db
+  Historical financial news archive.
+
+• historical_nlp_stress.csv
+  FinBERT stress scores generated from broad news datasets.
+
+• historical_nlp_stress_rg.csv
+  FinBERT stress scores generated from financial news datasets.
+
+• market_data.csv and supporting historical datasets
+  Raw market and macroeconomic inputs.
+
+Output Files
+
+• crash_predictor.pkl
+  Serialized production ensemble model.
+
+• final_predictions.csv
+  Historical model predictions and crash probabilities.
+
+• live_risk_history.csv
+  Daily risk-monitoring dataset used by the dashboard.
+
+• macro_stress_signals.csv
+  Daily systemic sentiment signals generated from live news.
+
+• latest_stress_headlines.csv
+  Most recent headlines contributing to sentiment scores.
+
+• model_validation_results.csv
+  Weekly validation outputs generated during retraining.
 
 ## ✨ Features / App Overview
-This application provides an institutional-grade toolset for tracking compounding behavioral panic and macroeconomic tail-risk. Here is a breakdown of each module:
+🏠 Home (Home.py)
+Introduces the Three-Layer Architecture and explains the rationale behind behavioral regime shift detection.
 
-🏠 **Home**(```Home.py```): The main landing page outlining the Dual-Engine Architecture, the lagging indicator trap, and the overall thesis of the regime shift classifier.
+🚨 Risk Monitor (1_Risk_Monitor.py)
+Provides live crash probabilities, historical risk tracking, and institutional-grade risk monitoring metrics.
 
-🛡️ **Risk Monitor** (```1_Risk_Monitor.py```): The live dashboard displaying the current market regime. It calculates the live probability of an impending crash based on the latest daily inference.
+🌐 Systemic Context (2_Systemic_Context.py)
+Displays macroeconomic drivers including global contagion, liquidity conditions, sector rotation, and sentiment dynamics.
 
-🌍 **Systemic Context** (```2_Systemic_Context.py```): Visualizes the Alternative Data (NLP) Engine's outputs, tracking the daily Systemic Stress Score extracted from unstructured financial headlines using FinBERT.
+📈 Live Markets (3_Live_Markets.py)
+Tracks live market conditions, volatility structures, and key macroeconomic indicators.
 
-📈 **Live Markets** (```3_Live_Markets.py```): Displays the structural market microstructure, including the global contagion correlation matrix and volatility skews across global indices.
+📊 Backtest Results (4_Backtest_Results.py)
+Evaluates historical strategy performance, drawdown reduction, and crash detection effectiveness.
 
-📊 **Backtest Results** (```4_Backtest_Results.py```): Allows users to evaluate the historical performance of the model (2023-2026), specifically showcasing the reduction in Maximum Drawdown from -14.78% (Buy & Hold) to -13.20% (Strategy) and an 88.9% Crash Detection Recall.
-
-🧠 **XAI Engine** (```5_XAI_Engine.py```): Proves the system is not a "Black Box" by deploying SHAP (SHapley Additive exPlanations) to dynamically map exactly which features (e.g., VIX spikes, negative news sentiment) are driving the crash probability on any given day.
+🧠 XAI Engine (5_XAI_Engine.py)
+Uses SHAP explainability to identify the primary factors driving every model prediction.
 
 ## 🤝 Contributing
 Contributions are welcome! If you have suggestions for improvements, want to add tick-level data granularity, or find any bugs, please feel free to:
