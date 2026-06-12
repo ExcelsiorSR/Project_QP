@@ -2,8 +2,8 @@ name: Weekly Ensemble Retraining
 
 on:
   schedule:
-    # Runs at 3:40 AM UTC (9:10 AM IST) every Monday (Day 1)
-    - cron: '30 2 * * 1'
+    # Runs at 3:40 AM UTC (8:43 AM IST) every Monday (Day 1)
+    - cron: '13 3 * * 1'
   workflow_dispatch: 
 
 permissions:
