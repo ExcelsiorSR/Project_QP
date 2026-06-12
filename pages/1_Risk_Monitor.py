@@ -29,13 +29,13 @@ def load_engine():
     return joblib.load(model_path)
 
 @st.cache_data
-def fetch_live_data():
+def fetch_live_data()(ttl="30m"):
     from modules.data_pipeline import IndianMarketFeatureEngine
     engine = IndianMarketFeatureEngine(start_date="2024-01-01", end_date=datetime.today().strftime('%Y-%m-%d'))
     return engine.get_final_dataset()
 
 @st.cache_data
-def fetch_latest_news():
+def fetch_latest_news()(ttl="30m"):
 
     try:
         csv_path = os.path.join(
@@ -54,20 +54,32 @@ def fetch_latest_news():
         st.sidebar.error(f"News Feed Error: {e}")
         return pd.DataFrame()
     
-@st.cache_data
+@st.cache_data(ttl="1h") 
 def fetch_historical_predictions():
-    try:
-        pred_path = os.path.join(os.path.dirname(__file__), '..', 'data/final_predictions.csv')
-        df = pd.read_csv(pred_path, index_col='Date', parse_dates=True)
+    pred_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'final_predictions.csv'))
+    
+    if not os.path.exists(pred_path):
+        st.sidebar.error(f"Critical Error: {pred_path} not found.")
+        return pd.DataFrame()
         
-        # Dynamically fetch Nifty to get the 'Close' prices for the chart
-        nifty = yf.download('^NSEI', start=df.index[0], end=df.index[-1], progress=False)
-        if isinstance(nifty.columns, pd.MultiIndex):
-            nifty.columns = nifty.columns.get_level_values(0)
+    try:
+        df = pd.read_csv(pred_path, index_col='Date', parse_dates=True)
+        if df.empty:
+            return df
             
-        df['Close'] = nifty['Close']
-        return df.tail(200) 
+        # Download Nifty safely with a fallback strategy
+        try:
+            nifty = yf.download('^NSEI', start=df.index[0].strftime('%Y-%m-%d'), end=df.index[-1].strftime('%Y-%m-%d'), progress=False)
+            if isinstance(nifty.columns, pd.MultiIndex):
+                nifty.columns = nifty.columns.get_level_values(0)
+            df['Close'] = nifty['Close']
+        except Exception as api_err:
+            st.sidebar.warning(f"Yahoo Finance Sync Failed: {api_err}. Using mock/zero prices.")
+            df['Close'] = 0.0 # Graceful fallback for layout integrity
+            
+        return df.tail(200)
     except Exception as e:
+        st.sidebar.error(f"Failed to process final_predictions.csv: {e}")
         return pd.DataFrame()
     
 @st.cache_data
