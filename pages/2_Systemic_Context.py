@@ -75,21 +75,21 @@ try:
 
         nifty_ret = (
             raw_prices['^NSEI'].ffill().iloc[-1]
-            - raw_prices['^NSEI'].ffill().iloc[-30]
-        ) / raw_prices['^NSEI'].ffill().iloc[-30]
+            - raw_prices['^NSEI'].ffill().iloc[-5]
+        ) / raw_prices['^NSEI'].ffill().iloc[-5]
 
         for tick in sectors:
 
             series = raw_prices[tick].ffill().dropna()
 
-            if len(series) < 30:
+            if len(series) < 5:
                 sector_returns.append(0)
                 continue
 
             sector_ret = (
                 series.iloc[-1]
-                - series.iloc[-30]
-            ) / series.iloc[-30]
+                - series.iloc[-5]
+            ) / series.iloc[-5]
 
             relative_strength = (
                 sector_ret - nifty_ret
@@ -131,7 +131,6 @@ try:
     # Mathematical Simulation of FII/DII Flow (Since NSE API is restricted)
     st.caption(
     "Illustrative FII/DII flow simulation used for dashboard demonstration.")
-    np.random.seed(42) # Keeps the chart stable on refresh
     dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
     # Simulate FIIs selling in a stressed regime, and DIIs attempting to buy the dip
     fii_flow = np.random.normal(loc=-1500, scale=2000, size=30) 

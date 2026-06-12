@@ -54,20 +54,45 @@ def fetch_latest_news():
         st.sidebar.error(f"News Feed Error: {e}")
         return pd.DataFrame()
     
-@st.cache_data
+@st.cache_data(ttl=1800)
 def fetch_historical_predictions():
-    try:
-        pred_path = os.path.join(os.path.dirname(__file__), '..', 'data/final_predictions.csv')
-        df = pd.read_csv(pred_path, index_col='Date', parse_dates=True)
+    # Strict OS-agnostic pathing for Linux cloud servers
+    pred_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data/final_predictions.csv'))
+    
+    if not os.path.exists(pred_path):
+        st.sidebar.error(f"System Error: {pred_path} not found on cloud server.")
+        return pd.DataFrame()
         
-        # Dynamically fetch Nifty to get the 'Close' prices for the chart
-        nifty = yf.download('^NSEI', start=df.index[0], end=df.index[-1], progress=False)
-        if isinstance(nifty.columns, pd.MultiIndex):
-            nifty.columns = nifty.columns.get_level_values(0)
+    try:
+        # 1. Load your actual AI predictions safely
+        df = pd.read_csv(pred_path, index_col='Date', parse_dates=True)
+        if df.empty:
+            df['Close'] = []
+            return df
             
-        df['Close'] = nifty['Close']
-        return df.tail(200) 
+        # 2. Attempt the Yahoo Finance API call separately
+        try:
+            start_str = df.index[0].strftime('%Y-%m-%d')
+            end_str = df.index[-1].strftime('%Y-%m-%d')
+            
+            nifty = yf.download('^NSEI', start=start_str, end=end_str, progress=False)
+            
+            if isinstance(nifty.columns, pd.MultiIndex):
+                nifty.columns = nifty.columns.get_level_values(0)
+                
+            if not nifty.empty and 'Close' in nifty.columns:
+                df['Close'] = nifty['Close']
+            else:
+                df['Close'] = np.nan
+                
+        except Exception as api_err:
+            st.sidebar.warning(f"Yahoo API Rate Limited. Plotting probabilities only.")
+            df['Close'] = np.nan # Graceful fallback if cloud IP is blocked
+            
+        return df.tail(200)
+        
     except Exception as e:
+        st.sidebar.error(f"Data ingestion failed: {e}")
         return pd.DataFrame()
     
 @st.cache_data
