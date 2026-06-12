@@ -2,9 +2,20 @@ name: Live Market & Sentiment Sync
 
 on:
   schedule:
-    # Runs every 30 minutes from Monday through Friday
-    # 3:30 UTC to 10:00 UTC corresponds to 9:00 AM IST to 3:30 PM IST
-    - cron: '*/30 3-10 * * 1-5'
+    # 1. Runs at 3:43 AM UTC (9:13 AM IST - Market Open pre-check)
+    - cron: '43 3 * * 1-5'
+    
+    # 2. Runs at 5:17 AM UTC (10:47 AM IST - Morning session update)
+    - cron: '17 5 * * 1-5'
+    
+    # 3. Runs at 6:47 AM UTC (12:17 PM IST - Mid-day sentiment)
+    - cron: '47 6 * * 1-5'
+    
+    # 4. Runs at 8:17 AM UTC (1:47 PM IST - Post-European open)
+    - cron: '17 8 * * 1-5'
+    
+    # 5. Runs at 9:47 AM UTC (3:17 PM IST - Pre-close assessment)
+    - cron: '47 9 * * 1-5'
   workflow_dispatch: # Allows you to trigger this manually from the GitHub UI whenever you want
 
 permissions:
@@ -36,6 +47,7 @@ jobs:
     - name: Run Daily Live Inference
       env:
         NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: |
         python scripts/news_scraper.py
         python scripts/daily_inference.py
