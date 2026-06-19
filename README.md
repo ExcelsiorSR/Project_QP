@@ -187,36 +187,36 @@ streamlit run Home.py
 ## 🗄️ Data Files
 Input Files
 
-- financial_news.db : 
+- ```financial_news.db```
   Historical financial news archive.
 
-- historical_nlp_stress.csv : 
+- ```historical_nlp_stress.csv```
   FinBERT stress scores generated from broad news datasets.
 
-- historical_nlp_stress_rg.csv : 
+- ```historical_nlp_stress_rg.csv```
   FinBERT stress scores generated from financial news datasets.
 
-- Financial_News_Headlines.csv and supporting historical datasets : 
+- ```Financial_News_Headlines.csv``` and ```supporting historical datasets```
   Raw market and macroeconomic inputs.
 
 Output Files
 
-- crash_predictor.pkl : 
+- ```crash_predictor.pkl```
   Serialized production ensemble model.
 
-- final_predictions.csv : 
+- ```final_predictions.csv```
   Historical model predictions and crash probabilities.
 
-- live_risk_history.csv :
+- ```live_risk_history.csv```
   Daily risk-monitoring dataset used by the dashboard.
 
-- macro_stress_signals.csv : 
+- ```macro_stress_signals.csv```
   Daily systemic sentiment signals generated from live news.
 
-- latest_stress_headlines.csv : 
+- ```latest_stress_headlines.csv```
   Most recent headlines contributing to sentiment scores.
 
-- model_validation_results.csv : 
+- ```model_validation_results.csv```
   Weekly validation outputs generated during retraining.
 
 ## ✨ Features / App Overview
