@@ -14,21 +14,21 @@ Three-Layer Institutional Architecture
 Traditional risk models are structurally reactive, failing to detect compounding behavioral panic until prices have already collapsed. Project QP introduces a Three-Layer Architecture designed to identify the invisible onset of systemic stress before the broader market reprices risk.
 
 Layer 1: Alternative Data Intelligence Engine
-• Scrapes real-time financial headlines through NewsAPI
-• Processes unstructured text using a localized FinBERT pipeline
-• Generates a daily Systemic Stress Score
-• Produces macro_stress_signals.csv and latest_stress_headlines.csv
+- Scrapes real-time financial headlines through NewsAPI
+- Processes unstructured text using a localized FinBERT pipeline
+- Generates a daily Systemic Stress Score
+- Produces macro_stress_signals.csv and latest_stress_headlines.csv
 
 Layer 2: Market Microstructure Engine
-• Extracts structural tail-risk indicators from global market data
-• Engineers volatility, drawdown, and cross-asset stress features
-• Tracks Flight-to-Safety behaviour through Gold, Oil, Currency and VIX dynamics
-• Calculates Composite Stress and sectoral rotation metrics
+- Extracts structural tail-risk indicators from global market data
+- Engineers volatility, drawdown, and cross-asset stress features
+- Tracks Flight-to-Safety behaviour through Gold, Oil, Currency and VIX dynamics
+- Calculates Composite Stress and sectoral rotation metrics
 
 Layer 3: Cost-Sensitive Ensemble
-• Ensemble of XGBoost, Random Forest, and Gradient Boosting models
-• Optimized to heavily penalize False Negatives (5x cost weighting)
-• Produces dynamic crash probabilities and market regime classifications
+- Ensemble of XGBoost, Random Forest, and Gradient Boosting models
+- Optimized to heavily penalize False Negatives (5x cost weighting)
+- Produces dynamic crash probabilities and market regime classifications
 
 Feature Count: 41 engineered quantitative and alternative-data features.
 
@@ -60,26 +60,26 @@ The model demonstrates a meaningful reduction in portfolio drawdown while mainta
 The entire production architecture is automated using GitHub Actions.
 
 Live Market & Sentiment Sync
-Frequency: Every 30 minutes during NSE trading hours
+Frequency: Every 1 hour 30 minutes during NSE trading hours
 
 Tasks:
-• News ingestion via NewsAPI
-• FinBERT sentiment extraction
-• Systemic Stress Score generation
-• Daily feature engineering
-• Crash probability inference
-• Prediction database updates
+   - News ingestion via NewsAPI
+   - FinBERT sentiment extraction
+   - Systemic Stress Score generation
+   - Daily feature engineering
+   - Crash probability inference
+   - Prediction database updates
 
 Weekly Ensemble Retraining
 Frequency: Every Monday before market open
 
 Tasks:
-• Historical dataset refresh
-• Model retraining
-• Threshold recalibration
-• Validation generation
-• Automated backtesting
-• Artifact deployment
+- Historical dataset refresh
+- Model retraining
+- Threshold recalibration
+- Validation generation
+- Automated backtesting
+- Artifact deployment
 
 ---
 
@@ -187,36 +187,36 @@ streamlit run Home.py
 ## 🗄️ Data Files
 Input Files
 
-• financial_news.db
+- financial_news.db : 
   Historical financial news archive.
 
-• historical_nlp_stress.csv
+- historical_nlp_stress.csv : 
   FinBERT stress scores generated from broad news datasets.
 
-• historical_nlp_stress_rg.csv
+- historical_nlp_stress_rg.csv : 
   FinBERT stress scores generated from financial news datasets.
 
-• market_data.csv and supporting historical datasets
+- Financial_News_Headlines.csv and supporting historical datasets : 
   Raw market and macroeconomic inputs.
 
 Output Files
 
-• crash_predictor.pkl
+- crash_predictor.pkl : 
   Serialized production ensemble model.
 
-• final_predictions.csv
+- final_predictions.csv : 
   Historical model predictions and crash probabilities.
 
-• live_risk_history.csv
+- live_risk_history.csv :
   Daily risk-monitoring dataset used by the dashboard.
 
-• macro_stress_signals.csv
+- macro_stress_signals.csv : 
   Daily systemic sentiment signals generated from live news.
 
-• latest_stress_headlines.csv
+- latest_stress_headlines.csv : 
   Most recent headlines contributing to sentiment scores.
 
-• model_validation_results.csv
+- model_validation_results.csv : 
   Weekly validation outputs generated during retraining.
 
 ## ✨ Features / App Overview
