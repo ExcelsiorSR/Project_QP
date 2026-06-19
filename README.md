@@ -9,28 +9,29 @@ An AI-driven quantitative finance architecture that fuses macroeconomic indicato
 ---
 
 ## 🏛 System Architecture
-Three-Layer Institutional Architecture
 
-Traditional risk models are structurally reactive, failing to detect compounding behavioral panic until prices have already collapsed. Project QP introduces a Three-Layer Architecture designed to identify the invisible onset of systemic stress before the broader market reprices risk.
+### Dual-Engine Institutional Architecture
 
-Layer 1: Alternative Data Intelligence Engine
-- Scrapes real-time financial headlines through NewsAPI
-- Processes unstructured text using a localized FinBERT pipeline
-- Generates a daily Systemic Stress Score
-- Produces macro_stress_signals.csv and latest_stress_headlines.csv
+Traditional risk models are structurally reactive, failing to detect compounding behavioral panic until prices have already collapsed. Project Beta introduces a **Dual-Engine Feature Pipeline** that feeds into a **Cost-Sensitive Decision Layer**, designed to identify the invisible onset of systemic stress before the broader market reprices risk.
 
-Layer 2: Market Microstructure Engine
-- Extracts structural tail-risk indicators from global market data
-- Engineers volatility, drawdown, and cross-asset stress features
-- Tracks Flight-to-Safety behaviour through Gold, Oil, Currency and VIX dynamics
-- Calculates Composite Stress and sectoral rotation metrics
+**Engine A: Alternative Data Intelligence (NLP)**
+* Scrapes real-time financial headlines through NewsAPI.
+* Processes unstructured text using a localized FinBERT pipeline to quantify market psychology.
+* Generates a daily Systemic Stress Score.
+* Produces `macro_stress_signals.csv` and `latest_stress_headlines.csv`.
 
-Layer 3: Cost-Sensitive Ensemble
-- Ensemble of XGBoost, Random Forest, and Gradient Boosting models
-- Optimized to heavily penalize False Negatives (5x cost weighting)
-- Produces dynamic crash probabilities and market regime classifications
+**Engine B: Market Microstructure (Structural Risk)**
+* Extracts structural tail-risk indicators from global market data.
+* Engineers downside deviation (utilizing Lower Partial Moments), drawdown, and cross-asset stress features.
+* Tracks Flight-to-Safety behavior through Gold, Oil, Currency, and VIX dynamics.
+* Calculates Composite Stress and sectoral rotation metrics.
 
-Feature Count: 41 engineered quantitative and alternative-data features.
+**The Decision Layer: Cost-Sensitive Ensemble Meta-Learner**
+* Stacking ensemble of XGBoost and Gradient Boosting models.
+* Optimized with asymmetric weights to heavily penalize False Negatives (5x cost weighting) to prioritize capital preservation over opportunistic yield.
+* Produces dynamic crash probabilities and executes regime classifications based on an optimized institutional threshold.
+
+**Feature Count:** 41 engineered quantitative and alternative-data features.
 
 ---
 
